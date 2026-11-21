@@ -1,3 +1,9 @@
 @echo off
 cd /d "%~dp0"
-python dynamic_island.py %*
+if exist "venv\Scripts\python.exe" (
+    "venv\Scripts\python.exe" dynamic_island.py %*
+) else if exist ".venv\Scripts\python.exe" (
+    ".venv\Scripts\python.exe" dynamic_island.py %*
+) else (
+    python dynamic_island.py %*
+)

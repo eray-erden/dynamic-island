@@ -5,6 +5,6 @@ psutil>=5.9.0
 dbus-python>=1.2.18; sys_platform == 'linux'
 
 # Windows dependencies
-winsdk>=1.0.0; sys_platform == 'win32'
+winsdk>=1.0.0b1; sys_platform == 'win32'
 pycaw>=20240210; sys_platform == 'win32'
 comtypes>=1.2.0; sys_platform == 'win32'

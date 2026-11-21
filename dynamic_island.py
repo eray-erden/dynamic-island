@@ -410,7 +410,13 @@ class DynamicIsland(QWidget):
 
         for label, icon_name, cmd in quick_apps:
             qbtn = QPushButton(f" {label}")
-            qbtn.setIcon(QIcon.fromTheme(icon_name))
+            icon = QIcon.fromTheme(icon_name)
+            if icon.isNull():
+                local_icon_path = os.path.join(ICON_DIR, f"{icon_name}.png")
+                if os.path.exists(local_icon_path):
+                    icon = QIcon(local_icon_path)
+            if not icon.isNull():
+                qbtn.setIcon(icon)
             qbtn.setIconSize(QSize(13, 13))
             qbtn.setFixedHeight(23)
             qbtn.setCursor(Qt.PointingHandCursor)
@@ -779,6 +785,10 @@ class DynamicIsland(QWidget):
 
 
 def main():
+    if hasattr(Qt, 'AA_EnableHighDpiScaling'):
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    if hasattr(Qt, 'AA_UseHighDpiPixmaps'):
+        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     app = QApplication(sys.argv)
     app.setApplicationName("DynamicIsland")
     app.setQuitOnLastWindowClosed(False)

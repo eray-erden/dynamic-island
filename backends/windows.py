@@ -54,8 +54,11 @@ class WindowsBackend(BaseBackend):
         if HAS_PYCAW:
             try:
                 devices = AudioUtilities.GetSpeakers()
-                interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-                self._volume_endpoint = cast(interface, POINTER(IAudioEndpointVolume))
+                if hasattr(devices, "EndpointVolume"):
+                    self._volume_endpoint = devices.EndpointVolume
+                else:
+                    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+                    self._volume_endpoint = cast(interface, POINTER(IAudioEndpointVolume))
             except Exception as e:
                 print("Windows audio init error:", e)
 
@@ -102,8 +105,20 @@ class WindowsBackend(BaseBackend):
                 art_url = ""
                 # Thumbnail stream if present
                 if props and props.thumbnail:
-                    # Can extract thumbnail stream if needed or save to temp file
-                    pass
+                    try:
+                        stream = await props.thumbnail.open_read_async()
+                        if stream and stream.size > 0:
+                            reader = DataReader(stream)
+                            await reader.load_async(stream.size)
+                            ba = bytearray(stream.size)
+                            reader.read_bytes(ba)
+                            import tempfile
+                            temp_art = os.path.join(tempfile.gettempdir(), "dynamic_island_win_art.png")
+                            with open(temp_art, "wb") as f:
+                                f.write(ba)
+                            art_url = temp_art
+                    except Exception:
+                        pass
 
                 app_id = session.source_app_user_model_id or "Media Player"
 
@@ -157,7 +172,13 @@ class WindowsBackend(BaseBackend):
             session = manager.get_current_session()
             if session:
                 from datetime import timedelta
-                await session.try_change_playback_position_async(timedelta(microseconds=pos_us).total_seconds() * 10_000_000)
+                try:
+                    await session.try_change_playback_position_async(timedelta(microseconds=pos_us))
+                except Exception:
+                    try:
+                        await session.try_change_playback_position_async(int(pos_us * 10))
+                    except Exception:
+                        pass
 
         try:
             self._run_async(_seek())
@@ -201,9 +222,9 @@ class WindowsBackend(BaseBackend):
 
     def get_quick_apps(self) -> List[Tuple[str, str, str]]:
         return [
-            ("Ara", "system-search", "explorer.exe shell:::{2559a160-21d7-11d4-bdaf-00c04f60b9f0}"),
-            ("Tarayıcı", "opera", "start http://"),
-            ("Terminal", "utilities-terminal", "wt.exe || start cmd.exe"),
+            ("Ara", "system-search", "explorer.exe search-ms:"),
+            ("Tarayıcı", "opera", "cmd.exe /c start https://"),
+            ("Terminal", "utilities-terminal", "cmd.exe /c start wt.exe 2>nul || cmd.exe /c start cmd.exe"),
             ("Dosyalar", "system-file-manager", "explorer.exe")
         ]
 
