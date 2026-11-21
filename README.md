@@ -77,7 +77,7 @@ Smooth real-time color morphing as volume increases:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/dynamic-island.git
+   git clone https://github.com/eray-erden/dynamic-island.git
    cd dynamic-island
    ```
 
